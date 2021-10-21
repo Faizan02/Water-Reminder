@@ -3,22 +3,23 @@ package com.waterreminder
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.waterreminder.room.Db
+import com.waterreminder.room.HistoryDao
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class AlarmReceiver : BroadcastReceiver() {
 
-    override fun onReceive(context: Context, intent: Intent) {
-        // This method is called when the BroadcastReceiver is receiving an Intent broadcast.
+    @Inject lateinit var historyDao: HistoryDao
 
-        val database = Db.database(context.applicationContext)
+    override fun onReceive(context: Context, intent: Intent) {
         GlobalScope.launch(Dispatchers.IO) {
-            val history = database.historyDao().getLastHistory()
+            val history = historyDao.getLastHistory()
             if (history != null) {
                 if (SimpleDateFormat("yyyy/MM/dd").format(Date()) ==
                     SimpleDateFormat("yyyy/MM/dd").format(history.date)
@@ -51,8 +52,5 @@ class AlarmReceiver : BroadcastReceiver() {
                 notificationUtils.getManager().notify(150, notification)
             }
         }
-
     }
-
-
 }

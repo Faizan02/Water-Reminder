@@ -5,14 +5,19 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.waterreminder.room.Db
+import com.waterreminder.room.WaterDatabase
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class BootReceiver: BroadcastReceiver() {
+
+    @Inject lateinit var database: WaterDatabase
+
     override fun onReceive(context: Context, intent: Intent) {
-        val database = Db.database(context.applicationContext)
         GlobalScope.launch(Dispatchers.IO) {
          val history = database.reminderDao().getAllHistoryOnce()
             history.forEach{

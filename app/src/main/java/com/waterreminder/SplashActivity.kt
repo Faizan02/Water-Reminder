@@ -10,15 +10,20 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.waterreminder.room.Db
 import com.waterreminder.room.Reminder
+import com.waterreminder.room.WaterDatabase
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.*
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class SplashActivity : AppCompatActivity() {
+
+    @Inject lateinit var database: WaterDatabase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -30,7 +35,6 @@ class SplashActivity : AppCompatActivity() {
                 var sharedPreferences: SharedPreferences = this.getSharedPreferences(sharedPrefFile,
                     Context.MODE_PRIVATE)
                 val weight = sharedPreferences.getFloat("weight",0.0f)
-                val database = Db.database(applicationContext)
                 database.reminderDao().getAllHistory().observe(this,{
                     if (it.isEmpty()){
                         val calendar = Calendar.getInstance();
