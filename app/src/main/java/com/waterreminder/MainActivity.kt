@@ -15,11 +15,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.lifecycle.Observer
-import com.waterreminder.room.Db
 import com.waterreminder.room.History
 import com.waterreminder.room.Reminder
 import com.waterreminder.room.WaterDatabase
 import com.google.android.material.navigation.NavigationView
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.appbar_layout.*
 import kotlinx.coroutines.Dispatchers
@@ -27,15 +27,17 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-    
+
+    @Inject
     lateinit var database: WaterDatabase
     private val sharedPrefFile = "kotlinSharedPreference"
     private lateinit var sharedPreferences: SharedPreferences
 
-    var currentValue:Double = 0.0
+    var currentValue: Double = 0.0
     var percentage = "0"
     var totalForML = 1892.71
     var oneMl = 29.5735
@@ -54,8 +56,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             sharedPrefFile,
             Context.MODE_PRIVATE
         )
-//        lottie_view.progress=0.0f
-        database = Db.database(applicationContext)
         database.historyDao().getAllHistory().observe(this, Observer {
             println(SimpleDateFormat("yyyy/MM/dd").format(Date()))
             if (it.isNotEmpty()) {
@@ -79,10 +79,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
             }
         })
-        addButton.setOnClickListener{
-            if (sharedPreferences.getBoolean("isFlOz", true)){
+        addButton.setOnClickListener {
+            if (sharedPreferences.getBoolean("isFlOz", true)) {
                 showOzDialogue()
-            }else{
+            } else {
                 showMlDialogue()
             }
         }
@@ -108,31 +108,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         navigationView.setNavigationItemSelectedListener(this)
         checkReminderAlarms()
     }
+
     override fun onResume() {
         super.onResume()
 
-        if (sharedPreferences.getBoolean("isFlOz", true)){
+        if (sharedPreferences.getBoolean("isFlOz", true)) {
             percentageText.text = "$percentage%"
             currentValueText.text = "0"
-            lottie_view.progress = percentage.toFloat()/100
+            lottie_view.progress = percentage.toFloat() / 100
             totalValueText.text = " / $totalForFlOz fl oz"
-            if (isFound){
+            if (isFound) {
                 currentValueText.text = "${currentValue.toFloat()}"
             }
-        }else{
+        } else {
             percentageText.text = "$percentage%"
             currentValueText.text = "0"
             totalValueText.text = " / $totalForML ml"
-            lottie_view.progress = percentage.toFloat()/100
-            if(isFound){
-                currentValueText.text = "${(currentValue*29.5735).toFloat()}"
+            lottie_view.progress = percentage.toFloat() / 100
+            if (isFound) {
+                currentValueText.text = "${(currentValue * 29.5735).toFloat()}"
             }
         }
     }
-    private fun showMlDialogue(){
+
+    private fun showMlDialogue() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Select Quantity")
-        val stringList = mlList.map { it.toString()+" ml" }.toTypedArray()
+        val stringList = mlList.map { it.toString() + " ml" }.toTypedArray()
         builder.setItems(stringList) { dialog, which ->
             when (which) {
                 0 -> addToDatabase(convertMlToOz(mlList[0]))
@@ -149,10 +151,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val dialog = builder.create()
         dialog.show()
     }
-    private fun showOzDialogue(){
+
+    private fun showOzDialogue() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Select Quantity")
-        val stringList = ozList.map { it.toString()+" fl oz" }.toTypedArray()
+        val stringList = ozList.map { it.toString() + " fl oz" }.toTypedArray()
         builder.setItems(stringList) { dialog, which ->
             when (which) {
                 0 -> addToDatabase(ozList[0] + currentValue)
@@ -169,40 +172,43 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val dialog = builder.create()
         dialog.show()
     }
-    private fun addToDatabase(ozValue: Double){
+
+    private fun addToDatabase(ozValue: Double) {
         Log.d("123", "value of oz $ozValue")
         Log.d("123", "value of current $currentValue")
         var newOzValue = ozValue
-        if (ozValue>64.0){
-            newOzValue=64.0
+        if (ozValue > 64.0) {
+            newOzValue = 64.0
         }
         Log.d("123", "value of current $newOzValue")
-        val percentage = (newOzValue*100)/64
+        val percentage = (newOzValue * 100) / 64
         val history = History(
             totalForFlOz, newOzValue, "${percentage.toInt()}",
             "fl oz", Date().time
         )
-        GlobalScope.launch(Dispatchers.IO){
+        GlobalScope.launch(Dispatchers.IO) {
             if (isFound) {
                 database.historyDao().insert(history.also {
                     it.id = foundId
                 })
-            }else{
+            } else {
                 database.historyDao().insert(history)
             }
         }
     }
-    private fun convertMlToOz(ml: Int):Double{
-        val oz = ml*0.033814
+
+    private fun convertMlToOz(ml: Int): Double {
+        val oz = ml * 0.033814
         Log.d("12345", "Ml value $ml  oz value: $oz  current Value $currentValue")
-        if (isFound){
-            return currentValue+oz
-        }else{
+        if (isFound) {
+            return currentValue + oz
+        } else {
             currentValue = oz
-            return  currentValue
+            return currentValue
         }
     }
-//    private fun convertOzToMl(oz:Int):Double{
+
+    //    private fun convertOzToMl(oz:Int):Double{
 //        val ml = oz*29.5735
 //        if (isFound){
 //            val newMl = currentValue*29.5735
@@ -213,25 +219,24 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 //        }
 //    }
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-    when (item.itemId) {
-        R.id.setting -> {
-            val intent = Intent(this, SettingActivity::class.java)
-            intent.putExtra("fromMain", true)
-            startActivity(intent)
+        when (item.itemId) {
+            R.id.setting -> {
+                val intent = Intent(this, SettingActivity::class.java)
+                intent.putExtra("fromMain", true)
+                startActivity(intent)
+            }
+            R.id.history -> startActivity(Intent(this, HistoryActivity::class.java))
+            R.id.reminder -> startActivity(Intent(this, ReminderActivity::class.java))
+            else -> { // Note the block
+                print("x is neither 1 nor 2")
+            }
+
         }
-        R.id.history -> startActivity(Intent(this, HistoryActivity::class.java))
-        R.id.reminder -> startActivity(Intent(this, ReminderActivity::class.java))
-        else -> { // Note the block
-            print("x is neither 1 nor 2")
-        }
-
-    }
-    return true
+        return true
     }
 
 
-
-    private fun checkReminderAlarms(){
+    private fun checkReminderAlarms() {
 //        database.reminderDao().getAllHistory().observeForever {list ->
 //            Log.d("1122", "checkReminderAlarms: Observer called")
 //            list.forEach {
@@ -248,44 +253,47 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             list.forEach {
                 if (it.isOn && !it.isAdded) {
                     Log.d("1234", "Alarm is active $it")
-                    val id = 1000+it.id
-                    startAlarm(it.triggerDate, id,it)
+                    val id = 1000 + it.id
+                    startAlarm(it.triggerDate, id, it)
                 } else if (!it.isOn) {
                     Log.d("1234", "Alarm is not active $it")
-                    val id = 1000+it.id
+                    val id = 1000 + it.id
                     cancelAlarm(id)
                 }
             }
         })
     }
-    private fun startAlarm(triggerTime: Long, intentId: Int,reminder: Reminder) {
+
+    private fun startAlarm(triggerTime: Long, intentId: Int, reminder: Reminder) {
 
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, AlarmReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(this, intentId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent =
+            PendingIntent.getBroadcast(this, intentId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
 //        val alarmUp = PendingIntent.getBroadcast(this, intentId,intent, PendingIntent.FLAG_NO_CREATE) != null
 
 //        if (alarmUp) {
 //            Log.d("1234", "Alarm is already active $intentId")
 //        }else{
-            alarmManager.setRepeating(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                AlarmManager.INTERVAL_DAY,
-                pendingIntent
-            )
-        val remind = Reminder(
-            reminder.triggerDate,reminder.title,true,true
+        alarmManager.setRepeating(
+            AlarmManager.RTC_WAKEUP,
+            triggerTime,
+            AlarmManager.INTERVAL_DAY,
+            pendingIntent
         )
-        GlobalScope.launch(Dispatchers.IO){
+        val remind = Reminder(
+            reminder.triggerDate, reminder.title, true, true
+        )
+        GlobalScope.launch(Dispatchers.IO) {
             database.reminderDao().insert(remind.also {
                 it.id = reminder.id
             })
         }
 //        }
     }
-    private fun cancelAlarm(intentID: Int){
+
+    private fun cancelAlarm(intentID: Int) {
 
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, AlarmReceiver::class.java)

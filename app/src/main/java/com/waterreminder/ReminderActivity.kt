@@ -9,20 +9,24 @@ import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waterreminder.adapter.ReminderRecyclerviewAdapter
-import com.waterreminder.room.Db
 import com.waterreminder.room.Reminder
 import com.waterreminder.room.WaterDatabase
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_reminder.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ReminderActivity : AppCompatActivity() {
-
 
     private lateinit var activityAdapter: ReminderRecyclerviewAdapter
     private var list = mutableListOf<Reminder>()
+
+    @Inject
     lateinit var database: WaterDatabase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminder)
@@ -58,7 +62,6 @@ class ReminderActivity : AppCompatActivity() {
 
         reminder_recyclerview.adapter = activityAdapter
         activityAdapter.notifyDataSetChanged()
-        database = Db.database(applicationContext)
         fetchReminderData()
     }
 

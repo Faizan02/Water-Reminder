@@ -6,14 +6,15 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waterreminder.room.WaterDatabase
 import kotlinx.android.synthetic.main.activity_add_reminder.*
-import org.koin.android.ext.android.inject
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
 
 class AddReminderActivity : AppCompatActivity() {
 
-    val database: WaterDatabase by inject()
+    @Inject
+    lateinit var database: WaterDatabase
 
     var time:Long = 0
     override fun onCreate(savedInstanceState: Bundle?) {
